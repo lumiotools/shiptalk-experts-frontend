@@ -1,22 +1,34 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import Link from "next/link"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { LoaderCircle } from "lucide-react";
 
 export default function HomePage() {
-  const [expertId, setExpertId] = useState("")
-  const router = useRouter()
+  const [experts, setExperts] = useState();
 
-  const handleViewExpert = (e) => {
-    e.preventDefault()
-    if (expertId) {
-      router.push(`/expert/${expertId}`)
+  const fetchExperts = async () => {
+    const response = await (
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/experts`)
+    ).json();
+    if (response.success) {
+      setExperts(response.data.experts);
     }
-  }
+  };
+
+  useEffect(() => {
+    fetchExperts();
+  }, []);
 
   return (
     <div className="w-full min-h-screen flex justify-center items-center p-8">
@@ -26,24 +38,44 @@ export default function HomePage() {
           <CardDescription>Register or manage shipping experts</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col space-y-4">
-          <Link href="/expert/new" passHref>
+          <Link href="/expert/new" className="mb-4">
             <Button className="w-full">Register New Expert</Button>
           </Link>
-          <form onSubmit={handleViewExpert} className="flex flex-row gap-4">
+
+          {experts ? (
+            experts.map((expert) => (
+              <div key={expert.id} className="flex items-center gap-4">
+                <img
+                  className="size-10 object-cover rounded-full border"
+                  src={process.env.NEXT_PUBLIC_API_URL + expert.profile_picture}
+                />
+                <div>
+                  <p className="font-bold">{expert.name}</p>
+                  <p className="text-sm">{expert.designation}</p>
+                </div>
+                <Link className="ml-auto" href={`/expert/${expert.id}`}>
+                  <Button variant="outline">View Details</Button>
+                </Link>
+              </div>
+            ))
+          ) : (
+            <div className="flex justify-center p-8">
+              <LoaderCircle className="animate-spin size-10 text-primary" />
+            </div>
+          )}
+          {/* <form onSubmit={handleViewExpert} className="flex flex-row gap-4">
             <Input
-            className="flex-[2]"
+              className="flex-[2]"
               type="text"
               placeholder="Enter Expert ID"
               value={expertId}
               onChange={(e) => setExpertId(e.target.value)}
               required
             />
-            <Button type="submit" className="flex-1" variant="outline">
-              View Expert Details
-            </Button>
-          </form>
+           
+          </form> */}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
